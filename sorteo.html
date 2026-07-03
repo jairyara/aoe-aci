@@ -86,6 +86,37 @@
   .field-group{display:none}
   .field-group.on{display:block}
 
+  /* ---------- responsive / móvil ---------- */
+  @media(max-width:600px){
+    body{overflow-x:hidden}
+    header{flex-wrap:wrap;padding:12px 14px;gap:10px}
+    header img.logo{width:44px;height:44px}
+    header .titles{flex:1 1 auto;min-width:0}
+    header .titles h1{font-size:18px}
+    header .titles .sub{font-size:11px}
+    header .spacer{display:none}
+    nav.tabs{order:3;flex:1 1 100%}
+    nav.tabs .tab{flex:1}
+    .wrap{padding:14px 12px}
+    .grid{gap:14px}
+    .card{padding:14px}
+    .card[style*="margin-bottom"]{margin-bottom:14px !important}
+    .pots{grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px}
+    .groups{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+    .toolbar{gap:6px}
+    .toolbar .spacer{display:none}
+    .toolbar h2{flex:1 1 auto}
+    #next{flex:1 1 100%}
+    #all,#reset{flex:1 1 45%}
+    /* 16px evita el zoom automático de iOS al enfocar un campo */
+    textarea,select,input[type=number],input[type=text]{font-size:16px}
+    textarea{min-height:160px}
+  }
+  @media(max-width:380px){
+    .pots,.groups{grid-template-columns:1fr}
+    .row{flex-wrap:wrap}
+  }
+
   /* ---------- MODAL ---------- */
   .overlay{position:fixed;inset:0;background:rgba(6,4,12,.86);backdrop-filter:blur(6px);
     display:none;align-items:center;justify-content:center;z-index:50}
