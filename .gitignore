@@ -2,3 +2,6 @@ node_modules/
 public/
 .wrangler/
 .dev.vars
+
+# Repo git anidado no relacionado (evita que vuelva como submódulo)
+aci/
