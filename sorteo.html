@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sorteo grupos — Torneo ACI</title>
+<style>
+  :root{
+    --bg:#0a0710; --panel:#150e26; --panel2:#1d1338; --line:#34265a;
+    --txt:#ece7f7; --muted:#9a8fc0; --accent:#b96bff; --accent-d:#7b3ff2;
+    --go:#5cc8ff; --silver:#c6ccdb; --ok:#45d19b; --slot:#0f0a1c;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:
+      radial-gradient(1100px 520px at 22% -8%,rgba(123,63,242,.35),transparent),
+      radial-gradient(900px 500px at 90% 0%,rgba(185,107,255,.15),transparent),
+      var(--bg);
+    color:var(--txt);min-height:100vh}
+  header{padding:16px 22px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:14px;
+    background:linear-gradient(180deg,rgba(29,19,56,.6),transparent)}
+  header img.logo{width:52px;height:52px;border-radius:50%;object-fit:cover;
+    border:2px solid var(--accent);box-shadow:0 0 18px rgba(185,107,255,.5)}
+  header .titles h1{font-size:20px;margin:0;font-weight:800;letter-spacing:.3px}
+  header .titles .sub{font-size:12px;color:var(--muted);margin-top:2px}
+  header .titles .sub b{color:var(--accent)}
+  .wrap{max-width:1180px;margin:0 auto;padding:20px}
+  .grid{display:grid;grid-template-columns:340px 1fr;gap:20px}
+  @media(max-width:860px){.grid{grid-template-columns:1fr}}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px}
+  .card h2{margin:0 0 12px;font-size:14px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted)}
+  label{display:block;font-size:12px;color:var(--muted);margin:10px 0 4px}
+  textarea{width:100%;min-height:210px;background:var(--slot);color:var(--txt);border:1px solid var(--line);
+    border-radius:8px;padding:10px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;resize:vertical}
+  select,input[type=number],input[type=text]{background:var(--slot);color:var(--txt);border:1px solid var(--line);
+    border-radius:8px;padding:8px 10px;font-size:13px;width:100%}
+  .row{display:flex;gap:10px}.row>*{flex:1}
+  .btns{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+  button{cursor:pointer;border:1px solid var(--line);background:var(--panel2);color:var(--txt);
+    padding:9px 14px;border-radius:8px;font-size:13px;font-weight:600;transition:.15s}
+  button:hover{border-color:var(--accent)}
+  button:disabled{opacity:.4;cursor:not-allowed}
+  button.primary{background:linear-gradient(180deg,var(--accent),var(--accent-d));color:#fff;border-color:var(--accent)}
+  button.go{background:var(--go);color:#04263a;border-color:var(--go)}
+  .hint{font-size:11px;color:var(--muted);margin-top:6px;line-height:1.5}
+  .tiny-clear{margin-top:6px;padding:4px 10px;font-size:11px;background:transparent;color:var(--muted);border:1px solid rgba(255,255,255,.15);border-radius:8px;cursor:pointer}
+  .tiny-clear:hover{color:#fff;border-color:var(--accent)}
+  .pots{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+  .pot{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px}
+  .pot h3{margin:0 0 8px;font-size:12px;color:var(--accent);text-transform:uppercase;letter-spacing:.5px}
+  .pot .p{display:flex;justify-content:space-between;gap:6px;padding:4px 6px;border-radius:6px;font-size:13px}
+  .pot .p.used{opacity:.32;text-decoration:line-through}
+  .pot .p.spin{background:var(--accent);color:#fff}
+  .pot .p .elo{color:var(--muted);font-variant-numeric:tabular-nums;font-size:12px}
+  .groups{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px}
+  .group{background:var(--panel2);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .group.target{outline:2px solid var(--accent);outline-offset:1px;box-shadow:0 0 22px rgba(185,107,255,.35)}
+  .group .gh{display:flex;justify-content:space-between;align-items:center;padding:9px 12px;
+    background:linear-gradient(180deg,#241748,#181030);border-bottom:1px solid var(--line)}
+  .group .gh .name{font-weight:800;font-size:14px}
+  .group .gh .avg{font-size:11px;color:var(--muted)}
+  .slot{display:flex;justify-content:space-between;gap:8px;padding:9px 12px;border-bottom:1px solid var(--line);
+    font-size:13px;min-height:38px;align-items:center}
+  .slot:last-child{border-bottom:0}
+  .slot.empty{color:#463a63}
+  .slot .elo{color:var(--muted);font-variant-numeric:tabular-nums}
+  .slot .pill{font-size:10px;color:var(--muted);border:1px solid var(--line);border-radius:5px;padding:1px 5px;margin-left:6px}
+  .slot.just{animation:pop .6s ease}
+  @keyframes pop{0%{background:var(--accent);color:#fff;transform:scale(1.05)}100%{background:transparent}}
+  .status{margin:14px 0;font-size:13px;color:var(--muted);min-height:20px}
+  .status b{color:var(--txt)}
+  .toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px}
+  .spacer{flex:1}
+  .mute{width:auto;flex:0 0 auto}
+  .vol{flex:0 0 auto;width:90px;accent-color:var(--accent);cursor:pointer}
+  footer{text-align:center;padding:22px 16px 30px;color:var(--muted);font-size:13px;
+    border-top:1px solid var(--line);margin-top:10px;display:flex;align-items:center;justify-content:center;gap:8px}
+  footer b{color:var(--accent)}
+  footer img.bm{height:30px;vertical-align:middle}
+  .tabs{display:flex;gap:6px}
+  .tab{background:transparent;border:1px solid var(--line);padding:8px 16px}
+  .tab.active{background:linear-gradient(180deg,var(--accent),var(--accent-d));color:#fff;border-color:var(--accent)}
+  .view[hidden]{display:none}
+  .poster-wrap{display:flex;flex-direction:column;align-items:center;gap:12px}
+  #poster{width:100%;max-width:360px;border-radius:14px;border:1px solid var(--line);box-shadow:0 20px 60px rgba(0,0,0,.5)}
+  .field-group{display:none}
+  .field-group.on{display:block}
+
+  /* ---------- MODAL ---------- */
+  .overlay{position:fixed;inset:0;background:rgba(6,4,12,.86);backdrop-filter:blur(6px);
+    display:none;align-items:center;justify-content:center;z-index:50}
+  .overlay.show{display:flex;animation:fade .25s ease}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+  .reveal{width:min(580px,92vw);background:linear-gradient(180deg,#1c1140,#100a22);
+    border:1px solid var(--accent);border-radius:18px;padding:0 0 30px;text-align:center;
+    box-shadow:0 30px 90px rgba(0,0,0,.7),0 0 40px rgba(123,63,242,.25);position:relative;overflow:hidden}
+  .reveal .glow{position:absolute;inset:-40% -10% auto -10%;height:220px;
+    background:radial-gradient(closest-side,rgba(185,107,255,.4),transparent);opacity:0;transition:.4s;z-index:0}
+  .reveal.landed .glow{opacity:1}
+  .ariete{display:none;width:100%;height:180px;object-fit:cover;background:#000;
+    border-bottom:1px solid var(--accent)}
+  .reveal.landed .ariete{display:block;animation:slam .5s ease}
+  @keyframes slam{0%{transform:scale(1.08);filter:brightness(1.6)}100%{transform:scale(1)}}
+  .reveal .body{position:relative;z-index:1;padding:26px 28px 0}
+  .reveal .bombo{font-size:13px;letter-spacing:3px;text-transform:uppercase;color:var(--accent);font-weight:800}
+  .reveal .arrow{color:var(--muted);font-size:12px;margin-top:4px}
+  .reveal .name{font-size:clamp(26px,6vw,46px);font-weight:900;margin:16px 0;line-height:1.1;min-height:1.2em}
+  .reveal.spinning .name{filter:blur(.4px);opacity:.92;color:var(--txt)}
+  .reveal.landed .name{color:var(--accent);text-shadow:0 0 24px rgba(185,107,255,.7);animation:land .6s cubic-bezier(.2,1.4,.4,1)}
+  @keyframes land{0%{transform:scale(.6);opacity:0}60%{transform:scale(1.15)}100%{transform:scale(1)}}
+  .reveal .to{font-size:16px;color:var(--muted);opacity:0;transition:.3s;min-height:1.4em}
+  .reveal.landed .to{opacity:1}.reveal .to b{color:#fff}
+  .reveal .elo{display:inline-block;margin-top:6px;font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums;opacity:0;transition:.3s}
+  .reveal.landed .elo{opacity:1}
+  .reveal .act{margin-top:22px;display:flex;gap:8px;justify-content:center;opacity:0;transition:.3s}
+  .reveal.landed .act{opacity:1}
+  .reveal.landed{animation:flash .5s ease}
+  @keyframes flash{0%{box-shadow:0 0 0 0 rgba(185,107,255,.6),0 30px 90px rgba(0,0,0,.7)}
+    100%{box-shadow:0 0 0 26px rgba(185,107,255,0),0 30px 90px rgba(0,0,0,.7)}}
+  .confetti{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:2}
+  .confetti i{position:absolute;top:-12px;width:8px;height:12px;opacity:.95;border-radius:1px;animation:fall linear forwards}
+  @keyframes fall{to{transform:translateY(120vh) rotate(540deg);opacity:0}}
+</style>
+</head>
+<body>
+<header>
+  <img class="logo" src="assets/logo.jpeg" alt="ACI">
+  <div class="titles">
+    <h1>Torneo ACI</h1>
+    <div class="sub">Sorteo &amp; anuncios · Hosted by Before Match</div>
+  </div>
+  <div class="spacer"></div>
+  <nav class="tabs">
+    <button class="tab active" data-view="sorteo">Sorteo</button>
+    <button class="tab" data-view="posts">Anuncios</button>
+  </nav>
+</header>
+
+<div class="wrap view" id="view-sorteo">
+<div class="grid">
+
+  <div class="card">
+    <h2>1 · Jugadores</h2>
+    <label>Pega los nicks (uno por línea). Formato: <code>Nick</code>, <code>Nick, ELO</code> o pegado desde Excel <code>Nick⇥ELO</code></label>
+    <textarea id="input" placeholder="El Rey Nocturno, 1562
+Jyarar, 1409
+Calvohp17, 1404
+ACI Granmini, 1391
+..."></textarea>
+
+    <div class="row" style="margin-top:12px">
+      <div><label>N.º de grupos</label><input type="number" id="groups" min="2" max="16" value="4"></div>
+      <div><label>Orden de bombos</label>
+        <select id="order">
+          <option value="elo">Por ELO (mayor → menor)</option>
+          <option value="input">Según orden pegado</option>
+        </select>
+      </div>
+    </div>
+
+    <label>Semilla (opcional, para reproducir el mismo sorteo)</label>
+    <input type="text" id="seed" placeholder="dejar vacío = aleatorio">
+
+    <div class="btns">
+      <button class="primary" id="prep">Preparar bombos</button>
+      <button id="loadExample">Ejemplo</button>
+    </div>
+    <div class="hint">Bombo 1 = las mejores por ELO = <b>cabezas de serie</b>. Los demás se reparten en bombos 2, 3, 4… El sorteo pone una de cada bombo en cada grupo.</div>
+  </div>
+
+  <div>
+    <div class="card" style="margin-bottom:20px">
+      <h2>2 · Bombos</h2>
+      <div class="pots" id="pots"><div class="hint">Prepara los bombos para empezar.</div></div>
+    </div>
+
+    <div class="card">
+      <div class="toolbar">
+        <h2 style="margin:0">3 · Sorteo</h2>
+        <div class="spacer"></div>
+        <button class="mute" id="mute" title="Silenciar/activar audio">🔊</button>
+        <input type="range" id="vol" class="vol" min="0" max="100" value="50" title="Volumen de la música">
+        <button class="go" id="next" disabled>Sortear siguiente ▶</button>
+        <button id="all" disabled>Sortear todo ⏩</button>
+        <button id="reset" disabled>Reiniciar</button>
+      </div>
+      <div class="status" id="status">—</div>
+      <div class="groups" id="groups-out"></div>
+      <div class="btns">
+        <button id="download" disabled>⬇ Descargar imagen</button>
+        <button id="copy" disabled>Copiar resultado</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<div class="wrap view" id="view-posts" hidden>
+<div class="grid">
+
+  <div class="card">
+    <h2>Pieza para Instagram</h2>
+    <label>Tipo de pieza</label>
+    <select id="pType">
+      <option value="schedule">Programación del día</option>
+      <option value="showmatch">Gran Showmatch</option>
+      <option value="stream">Banner transmisión (1920×1080)</option>
+    </select>
+
+    <label>Fecha</label>
+    <input type="text" id="pDate" value="Sábado 4 de Julio">
+    <label>Zona horaria (nota)</label>
+    <input type="text" id="pTz" value="Hora Colombia (COL)">
+
+    <!-- Programación -->
+    <div class="field-group on" id="fg-schedule">
+      <label>Título</label>
+      <input type="text" id="pSchedTitle" value="PROGRAMACIÓN">
+      <label>Eventos (uno por línea: <code>HORA | Evento</code>)</label>
+      <textarea id="pSchedItems" style="min-height:120px">8:00 PM | Gran Showmatch
+9:00 PM | Sorteo de grupos</textarea>
+    </div>
+
+    <!-- Showmatch -->
+    <div class="field-group" id="fg-showmatch">
+      <label>Título</label>
+      <input type="text" id="pSmTitle" value="GRAN SHOWMATCH">
+      <div class="row">
+        <div><label>Formato</label><input type="text" id="pSmFormat" value="BO3"></div>
+        <div><label>Hora</label><input type="text" id="pSmTime" value="8:00 PM"></div>
+      </div>
+      <div class="row">
+        <div style="flex:2"><label>Participante 1</label><input type="text" id="pSmP1" value="Fok Israhell"></div>
+        <div style="flex:1"><label>ELO 1</label><input type="text" id="pSmE1" value="1086"></div>
+      </div>
+      <div class="row">
+        <div style="flex:1"><label>Imagen participante 1 (opcional)</label><input type="file" id="pSmImg1" accept="image/*"><button type="button" class="tiny-clear" id="pSmImg1Clear">Quitar imagen</button></div>
+      </div>
+      <div class="row">
+        <div style="flex:2"><label>Participante 2</label><input type="text" id="pSmP2" value="Ummagumma"></div>
+        <div style="flex:1"><label>ELO 2</label><input type="text" id="pSmE2" value="1126"></div>
+      </div>
+      <div class="row">
+        <div style="flex:1"><label>Imagen participante 2 (opcional)</label><input type="file" id="pSmImg2" accept="image/*"><button type="button" class="tiny-clear" id="pSmImg2Clear">Quitar imagen</button></div>
+      </div>
+      <label>Frase / motivo (opcional)</label>
+      <input type="text" id="pSmReason" placeholder="Ej: La revancha que todos esperaban" value="">
+      <label>Pozo de premio</label>
+      <input type="text" id="pSmPrize" placeholder="Ej: $50 USD / 100.000 COP" value="">
+    </div>
+
+    <!-- Banner transmisión -->
+    <div class="field-group" id="fg-stream">
+      <label>Presets</label>
+      <div class="btns" id="stPresets" style="margin-top:0">
+        <button type="button" data-st="EN VIVO" data-ti="GRAN SHOWMATCH">En vivo</button>
+        <button type="button" data-st="PRÓXIMAMENTE" data-ti="PRONTO COMENZAMOS">Pronto comenzamos</button>
+        <button type="button" data-st="EN PAUSA" data-ti="VOLVEMOS ENSEGUIDA">Volvemos enseguida</button>
+      </div>
+      <label>Etiqueta de estado</label>
+      <input type="text" id="pStStatus" value="EN VIVO">
+      <label>Título</label>
+      <input type="text" id="pStTitle" value="GRAN SHOWMATCH">
+      <label>Subtítulo</label>
+      <input type="text" id="pStSub" value="Fok Israhell  vs  Ummagumma">
+      <label>Detalle</label>
+      <input type="text" id="pStDetail" value="BO3 · Sábado 4 de Julio · 8:00 PM (COL)">
+      <label>Canal / redes</label>
+      <input type="text" id="pStHandle" placeholder="twitch.tv/tucanal" value="">
+    </div>
+
+    <div class="btns"><button class="primary" id="pDownload">⬇ Descargar imagen</button></div>
+    <div class="hint">Tamaño según el tipo: <b>1080×1350</b> (Instagram) · <b>1920×1080</b> (banner). Se actualiza en vivo al editar.</div>
+  </div>
+
+  <div class="card">
+    <h2>Vista previa</h2>
+    <div class="poster-wrap">
+      <canvas id="poster" width="1080" height="1350"></canvas>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<footer>Made with ❤️ by <img class="bm" src="assets/before-match.png" alt="Before Match"></footer>
+
+<!-- MODAL -->
+<div class="overlay" id="overlay">
+  <div class="reveal" id="reveal">
+    <div class="glow"></div>
+    <video class="ariete" id="ariete" src="assets/ariete.mp4" muted playsinline loop preload="auto"></video>
+    <div class="confetti" id="confetti"></div>
+    <div class="body">
+      <div class="bombo" id="m-bombo">BOMBO</div>
+      <div class="arrow" id="m-arrow">sorteando…</div>
+      <div class="name" id="m-name">—</div>
+      <div class="to" id="m-to"></div>
+      <div class="elo" id="m-elo"></div>
+      <div class="act" id="m-act"><button class="primary" id="m-assign">Asignar al grupo ▶</button></div>
+    </div>
+  </div>
+</div>
+
+<audio id="audio" src="assets/Zero_Hour_Payoff.mp3" preload="auto" loop></audio>
+
+<script src="assets/logo-data.js"></script>
+<script src="assets/bm-logo-data.js"></script>
+<script>
+"use strict";
+const $ = (id) => document.getElementById(id);
+const LETTERS = "ABCDEFGHIJKLMNOP";
+
+function hashSeed(str){let h=1779033703^str.length;for(let i=0;i<str.length;i++){h=Math.imul(h^str.charCodeAt(i),3432918353);h=h<<13|h>>>19;}return (h>>>0);}
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return ((t^t>>>14)>>>0)/4294967296;};}
+let rng = Math.random;
+function makeRng(){const s=$("seed").value.trim();rng = s ? mulberry32(hashSeed(s)) : Math.random;}
+function shuffle(arr){const a=arr.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(rng()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+
+let players=[], pots=[], groups=[], sequence=[], step=0, busy=false, muted=false;
+
+function parse(text){
+  const out=[];
+  text.split(/\r?\n/).forEach(line=>{
+    const raw=line.trim(); if(!raw) return;
+    let nick=raw, elo=null, m=raw.split(/\t|,|;/);
+    if(m.length>=2){
+      const last=m[m.length-1].trim().replace(/[^\d.-]/g,"");
+      if(last!==""&&!isNaN(+last)){ elo=Math.round(+last); nick=m.slice(0,-1).join(",").trim(); }
+      else nick=raw.replace(/[,;\t]+$/,"").trim();
+    } else { const t=raw.match(/^(.*?)[\s]+(\d{2,4})$/); if(t){ nick=t[1].trim(); elo=+t[2]; } }
+    if(nick) out.push({nick, elo});
+  });
+  return out;
+}
+
+function prepare(){
+  players=parse($("input").value);
+  if(players.length<2){ alert("Pega al menos 2 jugadores."); return; }
+  const G=Math.max(2,Math.min(16,+$("groups").value||4));
+  if($("order").value==="elo") players.sort((a,b)=>(b.elo??-1)-(a.elo??-1));
+  pots=[]; for(let i=0;i<players.length;i+=G) pots.push(players.slice(i,i+G));
+  groups=Array.from({length:G},()=>[]); sequence=[]; step=0; busy=false;
+  renderPots(); buildEmptyGroups(G); precomputeDraw(G);
+  $("status").innerHTML=`Bombos: <b>${pots.length}</b> · Grupos: <b>${G}</b> · Jugadores: <b>${players.length}</b>. Pulsa “Sortear siguiente”.`;
+  $("next").disabled=false; $("all").disabled=false; $("reset").disabled=false;
+  $("copy").disabled=true; $("download").disabled=true;
+  closeModal(); resetAudio();
+}
+
+function precomputeDraw(G){
+  makeRng();
+  const assign=Array.from({length:G},()=>[]);
+  pots.forEach((pot,pi)=>{
+    const sh=shuffle(pot);
+    if(sh.length===G) sh.forEach((p,g)=>assign[g].push({player:p,pot:pi}));
+    else { const gi=shuffle([...Array(G).keys()]).slice(0,sh.length); sh.forEach((p,k)=>assign[gi[k]].push({player:p,pot:pi})); }
+  });
+  sequence=[];
+  for(let r=0;r<pots.length;r++) for(let g=0;g<G;g++){ const it=assign[g][r]; if(it) sequence.push({player:it.player,g,pot:it.pot}); }
+}
+
+function renderPots(){
+  const el=$("pots"); el.innerHTML="";
+  pots.forEach((pot,i)=>{
+    const d=document.createElement("div"); d.className="pot"; d.dataset.pot=i;
+    d.innerHTML=`<h3>Bombo ${i+1}${i===0?" · Cabezas":""}</h3>`+
+      pot.map(p=>`<div class="p" data-nick="${enc(p.nick)}"><span>${enc(p.nick)}</span><span class="elo">${p.elo??"—"}</span></div>`).join("");
+    el.appendChild(d);
+  });
+}
+function buildEmptyGroups(G){
+  const rows=pots.length, el=$("groups-out"); el.innerHTML="";
+  for(let g=0;g<G;g++){
+    const d=document.createElement("div"); d.className="group"; d.dataset.g=g;
+    let slots=""; for(let r=0;r<rows;r++) slots+=`<div class="slot empty" data-g="${g}" data-r="${r}"><span>—</span><span class="pill">B${r+1}</span></div>`;
+    d.innerHTML=`<div class="gh"><span class="name">Grupo ${LETTERS[g]}</span><span class="avg" data-avg="${g}">prom —</span></div>${slots}`;
+    el.appendChild(d);
+  }
+}
+function enc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+function cssEsc(s){return (window.CSS&&CSS.escape)?CSS.escape(s):String(s).replace(/["\\]/g,"\\$&");}
+
+// ---------- audio: arranca una vez y NO se reinicia entre sorteos ----------
+$("audio").volume = 0.5; // sugerido; ajustable con el slider de volumen
+function startAudio(){ if(muted) return; const a=$("audio"); if(a.paused){ a.play().catch(()=>{}); } }
+function resetAudio(){ const a=$("audio"); a.pause(); a.currentTime=0; }
+function stopVideo(){ const v=$("ariete"); try{ v.pause(); v.currentTime=0; }catch(e){} }
+
+// ---------- ceremonia ----------
+function revealNext(){
+  if(busy) return;
+  if(step>=sequence.length){ finish(); return; }
+  busy=true; setDrawButtons(true);
+  const peek=sequence[step];
+  const names=pots[peek.pot].map(p=>p.nick);
+  document.querySelectorAll(".group").forEach(g=>g.classList.remove("target"));
+  $("groups-out").querySelector(`.group[data-g="${peek.g}"]`).classList.add("target");
+  openModal(peek);
+  startAudio(); // continúa donde iba; no reinicia
+  let t=55;
+  function tick(){
+    const flashName=names[Math.floor(Math.random()*names.length)];
+    $("m-name").textContent=flashName;
+    const potEl=$("pots").querySelector(`.pot[data-pot="${peek.pot}"]`);
+    potEl.querySelectorAll(".p").forEach(p=>p.classList.remove("spin"));
+    const cur=potEl.querySelector(`.p[data-nick="${cssEsc(flashName)}"]`);
+    if(cur && !cur.classList.contains("used")) cur.classList.add("spin");
+    if(t<430){ t*=1.13; setTimeout(tick,t); } else land(peek);
+  }
+  tick();
+}
+
+function land(peek){
+  const rev=$("reveal");
+  $("pots").querySelectorAll(".p.spin").forEach(p=>p.classList.remove("spin"));
+  $("m-name").textContent=peek.player.nick;
+  $("m-arrow").textContent="¡Sale!";
+  $("m-to").innerHTML=`→ Grupo <b>${LETTERS[peek.g]}</b>`;
+  $("m-elo").textContent = peek.player.elo!=null ? `ELO ${peek.player.elo}` : "sin ELO";
+  rev.classList.remove("spinning"); rev.classList.add("landed");
+  const v=$("ariete"); try{ v.currentTime=0; v.play().catch(()=>{}); }catch(e){}
+  confetti();
+  clearTimeout(land._to); land._to=setTimeout(commit, 3400);
+}
+
+function commit(){
+  clearTimeout(land._to);
+  if(step>=sequence.length){ closeModal(); return; }
+  const {player,g,pot}=sequence[step++];
+  const slot=$("groups-out").querySelector(`.group[data-g="${g}"] .slot[data-r="${pot}"]`);
+  slot.classList.remove("empty"); slot.classList.add("just");
+  slot.innerHTML=`<span>${enc(player.nick)}</span><span class="elo">${player.elo??"—"}<span class="pill">B${pot+1}</span></span>`;
+  groups[g].push(player);
+  const potEl=$("pots").querySelector(`.pot[data-pot="${pot}"] .p[data-nick="${cssEsc(player.nick)}"]`);
+  if(potEl){ potEl.classList.remove("spin"); potEl.classList.add("used"); }
+  updateAvg(g);
+  $("status").innerHTML=`Bombo <b>${pot+1}</b> → Grupo <b>${LETTERS[g]}</b>: <b>${enc(player.nick)}</b> (${player.elo??"s/e"})`;
+  closeModal();
+  document.querySelectorAll(".group").forEach(gr=>gr.classList.remove("target"));
+  busy=false; setDrawButtons(false);
+  if(step>=sequence.length) finish();
+}
+
+function revealAll(){
+  clearTimeout(land._to); closeModal(); busy=false;
+  while(step<sequence.length){ commitSilent(); }
+  finish();
+}
+function commitSilent(){
+  const {player,g,pot}=sequence[step++];
+  const slot=$("groups-out").querySelector(`.group[data-g="${g}"] .slot[data-r="${pot}"]`);
+  slot.classList.remove("empty");
+  slot.innerHTML=`<span>${enc(player.nick)}</span><span class="elo">${player.elo??"—"}<span class="pill">B${pot+1}</span></span>`;
+  groups[g].push(player);
+  const potEl=$("pots").querySelector(`.pot[data-pot="${pot}"] .p[data-nick="${cssEsc(player.nick)}"]`);
+  if(potEl) potEl.classList.add("used");
+  updateAvg(g);
+}
+
+function finish(){
+  $("next").disabled=true; $("all").disabled=true; $("copy").disabled=false; $("download").disabled=false;
+  document.querySelectorAll(".group").forEach(gr=>gr.classList.remove("target"));
+  $("status").innerHTML=`<b>Sorteo completo.</b> ${groups.length} grupos.`;
+}
+function setDrawButtons(dis){ $("next").disabled=dis; $("all").disabled=dis; }
+function updateAvg(g){
+  const arr=groups[g].map(p=>p.elo).filter(v=>typeof v==="number");
+  const avg=arr.length?Math.round(arr.reduce((a,b)=>a+b,0)/arr.length):null;
+  const el=$("groups-out").querySelector(`.avg[data-avg="${g}"]`);
+  if(el) el.textContent="prom "+(avg??"—");
+}
+
+function openModal(peek){
+  const rev=$("reveal");
+  rev.classList.remove("landed"); rev.classList.add("spinning");
+  stopVideo();
+  $("m-bombo").textContent=`Bombo ${peek.pot+1}${peek.pot===0?" · Cabezas":""}`;
+  $("m-arrow").textContent="sorteando…";
+  $("m-to").innerHTML=""; $("m-elo").textContent=""; $("m-name").textContent="…";
+  $("confetti").innerHTML="";
+  $("overlay").classList.add("show");
+}
+function closeModal(){ $("overlay").classList.remove("show"); const r=$("reveal"); r.classList.remove("spinning","landed"); stopVideo(); }
+function confetti(){
+  const box=$("confetti"); const cols=["#b96bff","#7b3ff2","#5cc8ff","#c6ccdb","#fff"];
+  for(let i=0;i<80;i++){
+    const s=document.createElement("i");
+    s.style.left=Math.random()*100+"%";
+    s.style.background=cols[i%cols.length];
+    s.style.animationDuration=(0.9+Math.random()*1.2)+"s";
+    s.style.animationDelay=(Math.random()*0.3)+"s";
+    s.style.transform=`translateY(0) rotate(${Math.random()*360}deg)`;
+    box.appendChild(s);
+  }
+}
+
+// ---------- copiar ----------
+function copyResult(){
+  let out="";
+  groups.forEach((grp,g)=>{ out+=`Grupo ${LETTERS[g]}\n`; grp.forEach(p=>out+=`  ${p.nick}${p.elo!=null?` (${p.elo})`:""}\n`); out+="\n"; });
+  navigator.clipboard.writeText(out.trim()).then(()=>{ $("copy").textContent="¡Copiado!"; setTimeout(()=>$("copy").textContent="Copiar resultado",1500); });
+}
+
+// ---------- descargar imagen (canvas puro, sin librerías) ----------
+// Logo incrustado como data-URI (assets/logo-data.js) para NO contaminar el canvas.
+const logoImg = new Image();
+if (typeof LOGO_DATA !== "undefined") logoImg.src = LOGO_DATA;
+const bmImg = new Image();
+if (typeof BM_LOGO_DATA !== "undefined") bmImg.src = BM_LOGO_DATA;
+// Imágenes (avatar/logo) por contendiente del showmatch
+const p1Img = new Image();
+const p2Img = new Image();
+function buildResultCanvas(){
+  const S=2; // escala para nitidez
+  const G=groups.length, rows=pots.length;
+  const cols=Math.min(G,4), gridRows=Math.ceil(G/cols);
+  const cardW=280, gap=22, pad=40, headH=232, cardHead=44, rowH=34;
+  const cardH=cardHead+rows*rowH+10;
+  const footerH=58;
+  const W=pad*2+cols*cardW+(cols-1)*gap;
+  const H=headH+pad+gridRows*cardH+(gridRows-1)*gap+pad+footerH;
+  const c=document.createElement("canvas"); c.width=W*S; c.height=H*S;
+  const x=c.getContext("2d"); x.scale(S,S);
+  const rr=(X,Y,w,h,r)=>{x.beginPath();x.moveTo(X+r,Y);x.arcTo(X+w,Y,X+w,Y+h,r);x.arcTo(X+w,Y+h,X,Y+h,r);x.arcTo(X,Y+h,X,Y,r);x.arcTo(X,Y,X+w,Y,r);x.closePath();};
+  const trunc=(t,max)=>{ t=String(t); if(x.measureText(t).width<=max) return t; while(t.length>1&&x.measureText(t+"…").width>max) t=t.slice(0,-1); return t+"…"; };
+  // fondo
+  const bg=x.createLinearGradient(0,0,0,H); bg.addColorStop(0,"#160d2b"); bg.addColorStop(1,"#0a0710");
+  x.fillStyle=bg; x.fillRect(0,0,W,H);
+  x.fillStyle="rgba(123,63,242,.18)"; x.beginPath(); x.arc(W*0.25,0,260,0,7); x.fill();
+  // logo (círculo) arriba
+  x.textBaseline="alphabetic";
+  if(logoImg && logoImg.complete && logoImg.naturalWidth){
+    const ls=92, lcx=W/2, lcy=20+ls/2;
+    x.save(); x.beginPath(); x.arc(lcx,lcy,ls/2,0,7); x.closePath(); x.clip();
+    x.drawImage(logoImg, lcx-ls/2, 20, ls, ls); x.restore();
+    x.strokeStyle="#b96bff"; x.lineWidth=3; x.beginPath(); x.arc(lcx,lcy,ls/2,0,7); x.stroke();
+  }
+  // título
+  x.fillStyle="#b96bff"; x.font="800 15px sans-serif"; x.textAlign="center";
+  x.fillText("SORTEO DE GRUPOS", W/2, 150);
+  x.fillStyle="#fff"; x.font="900 40px sans-serif";
+  x.fillText("TORNEO ACI", W/2, 194);
+  x.fillStyle="#9a8fc0"; x.font="600 15px sans-serif";
+  x.fillText("Hosted by Before Match", W/2, 220);
+  // tarjetas
+  for(let g=0;g<G;g++){
+    const cx=pad+(g%cols)*(cardW+gap);
+    const cy=headH+pad+Math.floor(g/cols)*(cardH+gap);
+    x.fillStyle="#1d1338"; rr(cx,cy,cardW,cardH,12); x.fill();
+    x.strokeStyle="#34265a"; x.lineWidth=1; rr(cx,cy,cardW,cardH,12); x.stroke();
+    // header
+    x.fillStyle="#241748"; rr(cx,cy,cardW,cardHead,12); x.fill();
+    x.fillStyle="#fff"; x.font="800 18px sans-serif"; x.textAlign="left";
+    x.fillText("Grupo "+LETTERS[g], cx+14, cy+28);
+    const arr=groups[g].map(p=>p.elo).filter(v=>typeof v==="number");
+    const avg=arr.length?Math.round(arr.reduce((a,b)=>a+b,0)/arr.length):null;
+    x.fillStyle="#9a8fc0"; x.font="600 12px sans-serif"; x.textAlign="right";
+    x.fillText("prom "+(avg??"—"), cx+cardW-14, cy+27);
+    // filas
+    groups[g].forEach((p,i)=>{
+      const ry=cy+cardHead+i*rowH;
+      if(i%2) { x.fillStyle="rgba(255,255,255,.03)"; x.fillRect(cx+1,ry,cardW-2,rowH); }
+      x.fillStyle="#b96bff"; x.font="700 11px sans-serif"; x.textAlign="left";
+      x.fillText("B"+(i+1), cx+12, ry+21);
+      x.fillStyle="#ece7f7"; x.font="600 14px sans-serif";
+      x.fillText(trunc(p.nick, cardW-90), cx+38, ry+21);
+      x.fillStyle="#9a8fc0"; x.font="600 13px sans-serif"; x.textAlign="right";
+      x.fillText(p.elo!=null?String(p.elo):"—", cx+cardW-12, ry+21);
+    });
+  }
+  // crédito al pie: "Made with ♥ by [logo Before Match]"
+  x.font="600 15px sans-serif"; x.textBaseline="alphabetic";
+  const t1="Made with ", t2="♥", t3=" by ", fy=H-22, credH=28;
+  const w1=x.measureText(t1).width, w2=x.measureText(t2).width, w3=x.measureText(t3).width;
+  let lw=0; const hasBM = bmImg && bmImg.complete && bmImg.naturalWidth;
+  if(hasBM) lw = credH*bmImg.naturalWidth/bmImg.naturalHeight;
+  let sx=W/2-(w1+w2+w3+lw)/2; x.textAlign="left";
+  x.fillStyle="#9a8fc0"; x.fillText(t1,sx,fy); sx+=w1;
+  x.fillStyle="#ff5b7f"; x.fillText(t2,sx,fy); sx+=w2;
+  x.fillStyle="#9a8fc0"; x.fillText(t3,sx,fy); sx+=w3;
+  if(hasBM) x.drawImage(bmImg, sx, fy-credH+7, lw, credH);
+  return c;
+}
+function downloadImage(){
+  if(logoImg.src && !(logoImg.complete && logoImg.naturalWidth)){ logoImg.onload=downloadImage; return; }
+  if(bmImg.src && !(bmImg.complete && bmImg.naturalWidth)){ bmImg.onload=downloadImage; return; }
+  const c=buildResultCanvas();
+  c.toBlob((blob)=>{
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement("a"); a.href=url; a.download="sorteo-torneo-aci.png";
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),1000);
+  }, "image/png");
+}
+
+const EXAMPLE=`El Rey Nocturno, 1562
+Jyarar, 1409
+Calvohp17, 1404
+ACI Granmini, 1391
+ACI ARTANISX, 1319
+Dross, 1292
+SHAN, 1286
+GreenMario, 1232
+Tyuered, 1221
+ACI Kira_game, 1194
+ACI Tuffix, 1136
+Ummagumma, 1126
+Fok Israhell, 1086`;
+
+$("prep").onclick=prepare;
+$("next").onclick=revealNext;
+$("all").onclick=revealAll;
+$("reset").onclick=()=>{ if(pots.length) prepare(); };
+$("copy").onclick=copyResult;
+$("download").onclick=downloadImage;
+$("loadExample").onclick=()=>{ $("input").value=EXAMPLE; };
+$("m-assign").onclick=()=>{ if($("reveal").classList.contains("landed")) commit(); };
+$("mute").onclick=()=>{ muted=!muted; $("mute").textContent=muted?"🔇":"🔊"; const a=$("audio"); if(muted) a.pause(); else if(pots.length&&busy) a.play().catch(()=>{}); };
+$("vol").oninput=(e)=>{ $("audio").volume = (+e.target.value)/100; };
+$("overlay").onclick=(e)=>{ if(e.target===$("overlay") && $("reveal").classList.contains("landed")) commit(); };
+
+// ================= PIEZAS PARA INSTAGRAM (1080×1350) =================
+function pRR(x,X,Y,w,h,r){x.beginPath();x.moveTo(X+r,Y);x.arcTo(X+w,Y,X+w,Y+h,r);x.arcTo(X+w,Y+h,X,Y+h,r);x.arcTo(X,Y+h,X,Y,r);x.arcTo(X,Y,X+w,Y,r);x.closePath();}
+function pRad(x,W,H,cx,cy,r,col){const g=x.createRadialGradient(cx,cy,0,cx,cy,r);g.addColorStop(0,col);g.addColorStop(1,"transparent");x.save();x.fillStyle=g;x.fillRect(0,0,W,H);x.restore();}
+function fitText(x,t,max,startPx,w){let px=startPx;x.font=`${w} ${px}px sans-serif`;while(px>18&&x.measureText(t).width>max){px-=2;x.font=`${w} ${px}px sans-serif`;}return px;}
+// Dibuja img centrada en (cx,cy) ajustada (contain) dentro de un cuadro de lado box, sin deformar
+function drawContain(x,img,cx,cy,box){
+  if(!(img&&img.complete&&img.naturalWidth)) return;
+  const sc=Math.min(box/img.naturalWidth, box/img.naturalHeight);
+  const w=img.naturalWidth*sc, h=img.naturalHeight*sc;
+  x.drawImage(img, cx-w/2, cy-h/2, w, h);
+}
+
+function posterBase(x,W,H){
+  const bg=x.createLinearGradient(0,0,0,H); bg.addColorStop(0,"#1a1030"); bg.addColorStop(1,"#08060f");
+  x.fillStyle=bg; x.fillRect(0,0,W,H);
+  pRad(x,W,H,W*0.5,H*0.30,660,"rgba(123,63,242,.30)");
+  pRad(x,W,H,W*0.88,60,430,"rgba(185,107,255,.16)");
+  if(logoImg.complete&&logoImg.naturalWidth){ x.save(); x.globalAlpha=0.05; const s=W*0.92; x.drawImage(logoImg,(W-s)/2,H*0.33,s,s); x.restore(); }
+  x.strokeStyle="rgba(185,107,255,.35)"; x.lineWidth=6; pRR(x,18,18,W-36,H-36,28); x.stroke();
+  x.textBaseline="alphabetic"; x.textAlign="center";
+  if(logoImg.complete&&logoImg.naturalWidth){ const s=150,ly=78; x.save(); x.beginPath(); x.arc(W/2,ly+s/2,s/2,0,7); x.clip(); x.drawImage(logoImg,(W-s)/2,ly,s,s); x.restore(); x.lineWidth=5; x.strokeStyle="#b96bff"; x.beginPath(); x.arc(W/2,ly+s/2,s/2,0,7); x.stroke(); }
+  x.fillStyle="#cdbff0"; x.font="800 34px sans-serif"; x.fillText("TORNEO ACI", W/2, 282);
+}
+function posterFooter(x,W,H){
+  const cy=H-100; x.textAlign="left"; x.textBaseline="alphabetic";
+  x.fillStyle="#9a8fc0"; x.font="600 30px sans-serif";
+  const label="Hosted by "; const lw=x.measureText(label).width;
+  let bw=0,bh=52; if(bmImg.complete&&bmImg.naturalWidth) bw=bh*bmImg.naturalWidth/bmImg.naturalHeight;
+  let sx=W/2-(lw+bw)/2; x.fillText(label,sx,cy); sx+=lw;
+  if(bw) x.drawImage(bmImg,sx,cy-bh+18,bw,bh);
+}
+function drawSchedule(x,W,H,d){
+  posterBase(x,W,H); x.textAlign="center";
+  x.fillStyle="#fff"; const ps=fitText(x,d.title,W-160,80,"900"); x.font=`900 ${ps}px sans-serif`; x.fillText(d.title,W/2,400);
+  x.fillStyle="#b96bff"; x.font="800 40px sans-serif"; x.fillText(d.date,W/2,468);
+  x.fillStyle="#9a8fc0"; x.font="600 28px sans-serif"; x.fillText(d.tz,W/2,516);
+  const items=d.items.length?d.items:[{time:"",event:""}], n=items.length;
+  const rowH=140,gap=24,cardW=W-160,cx=80,blockH=n*rowH+(n-1)*gap;
+  let y=610; const avail=(H-190)-610; if(blockH<avail) y=610+(avail-blockH)/2;
+  items.forEach((it,i)=>{
+    const ry=y+i*(rowH+gap);
+    x.fillStyle="rgba(255,255,255,.05)"; pRR(x,cx,ry,cardW,rowH,20); x.fill();
+    x.strokeStyle="rgba(185,107,255,.4)"; x.lineWidth=2; pRR(x,cx,ry,cardW,rowH,20); x.stroke();
+    x.textAlign="left"; x.fillStyle="#b96bff"; const hp=fitText(x,it.time,320,54,"800"); x.font=`800 ${hp}px sans-serif`; x.fillText(it.time,cx+40,ry+rowH/2+hp*0.34);
+    x.textAlign="right"; x.fillStyle="#fff"; const ep=fitText(x,it.event,cardW-460,46,"700"); x.font=`700 ${ep}px sans-serif`; x.fillText(it.event,cx+cardW-40,ry+rowH/2+ep*0.34);
+  });
+  posterFooter(x,W,H);
+}
+function drawShowmatch(x,W,H,d){
+  posterBase(x,W,H); x.textAlign="center";
+  x.fillStyle="#fff"; const tp=fitText(x,d.title,W-140,86,"900"); x.font=`900 ${tp}px sans-serif`; x.fillText(d.title,W/2,392);
+  const pill=`${d.format}   ·   ${d.time} ${d.tzShort}`;
+  x.font="800 32px sans-serif"; const pw=x.measureText(pill).width+60,ph=60,px=W/2-pw/2,py=428;
+  const g=x.createLinearGradient(px,0,px+pw,0); g.addColorStop(0,"#7b3ff2"); g.addColorStop(1,"#b96bff");
+  x.fillStyle=g; pRR(x,px,py,pw,ph,30); x.fill();
+  x.fillStyle="#fff"; x.textBaseline="middle"; x.fillText(pill,W/2,py+ph/2+2); x.textBaseline="alphabetic";
+  x.fillStyle="#9a8fc0"; x.font="600 30px sans-serif"; x.fillText(d.date,W/2,548);
+  if(d.reason){
+    x.fillStyle="#e7d9ff";
+    const rp=fitText(x,'"'+d.reason+'"',W-160,40,"italic 700");
+    x.font=`italic 700 ${rp}px sans-serif`; x.fillText('"'+d.reason+'"',W/2,606);
+  }
+  const midY=d.reason?828:790;
+  x.fillStyle="#fff"; const p1=fitText(x,d.p1,W-170,72,"800"); x.font=`800 ${p1}px sans-serif`; x.fillText(d.p1,W/2,midY-110);
+  if(d.e1){ x.fillStyle="#b96bff"; x.font="700 34px sans-serif"; x.fillText("ELO "+d.e1,W/2,midY-58); }
+  const sqBox=200, sqCy=midY+2;
+  drawContain(x,p1Img,190,sqCy,sqBox);
+  drawContain(x,p2Img,W-190,sqCy,sqBox);
+  x.save(); x.fillStyle="#b96bff"; x.shadowColor="rgba(185,107,255,.85)"; x.shadowBlur=34; x.font="900 116px sans-serif"; x.fillText("VS",W/2,midY+40); x.restore();
+  x.fillStyle="#fff"; const p2=fitText(x,d.p2,W-170,72,"800"); x.font=`800 ${p2}px sans-serif`; x.fillText(d.p2,W/2,midY+180);
+  if(d.e2){ x.fillStyle="#b96bff"; x.font="700 34px sans-serif"; x.fillText("ELO "+d.e2,W/2,midY+228); }
+  if(d.prize){
+    const t="POZO DE PREMIO:  "+d.prize;
+    const fp=fitText(x,t,W-160,38,"800"); x.font=`800 ${fp}px sans-serif`;
+    const bw=x.measureText(t).width+70,bh=66,bx=W/2-bw/2,by=midY+300;
+    const gg=x.createLinearGradient(bx,0,bx+bw,0); gg.addColorStop(0,"#f6c94b"); gg.addColorStop(1,"#e8a317");
+    x.save(); x.shadowColor="rgba(246,201,75,.5)"; x.shadowBlur=24; x.fillStyle=gg; pRR(x,bx,by,bw,bh,33); x.fill(); x.restore();
+    x.fillStyle="#2a1a00"; x.textBaseline="middle"; x.fillText(t,W/2,by+bh/2+2); x.textBaseline="alphabetic";
+  }
+  posterFooter(x,W,H);
+}
+function drawStream(x,W,H,d){
+  const bg=x.createLinearGradient(0,0,W,H); bg.addColorStop(0,"#1a1030"); bg.addColorStop(1,"#08060f");
+  x.fillStyle=bg; x.fillRect(0,0,W,H);
+  pRad(x,W,H,W*0.30,H*0.5,780,"rgba(123,63,242,.30)");
+  pRad(x,W,H,W*0.95,0,540,"rgba(185,107,255,.15)");
+  if(logoImg.complete&&logoImg.naturalWidth){ x.save(); x.globalAlpha=0.05; const s=1000; x.drawImage(logoImg,W-s*0.70,(H-s)/2,s,s); x.restore(); }
+  x.strokeStyle="rgba(185,107,255,.35)"; x.lineWidth=6; pRR(x,18,18,W-36,H-36,28); x.stroke();
+  // logo izquierda
+  const lc=440, ly=H/2-24;
+  if(logoImg.complete&&logoImg.naturalWidth){ const s=380; x.save(); x.beginPath(); x.arc(lc,ly,s/2,0,7); x.clip(); x.drawImage(logoImg,lc-s/2,ly-s/2,s,s); x.restore(); x.lineWidth=6; x.strokeStyle="#b96bff"; x.beginPath(); x.arc(lc,ly,s/2,0,7); x.stroke(); }
+  x.textAlign="center"; x.textBaseline="alphabetic"; x.fillStyle="#cdbff0"; x.font="800 40px sans-serif"; x.fillText("TORNEO ACI", lc, ly+250);
+  // bloque de texto derecha
+  const tx=780, maxW=W-tx-90; x.textAlign="left"; let y=330;
+  if(d.status){
+    x.font="800 34px sans-serif"; const sw=x.measureText(d.status).width;
+    const live=/VIVO|LIVE/i.test(d.status), dotw=live?44:0, pw=sw+dotw+56, ph=64;
+    const g=x.createLinearGradient(tx,0,tx+pw,0); g.addColorStop(0,"#7b3ff2"); g.addColorStop(1,"#b96bff");
+    x.fillStyle=g; pRR(x,tx,y-ph+16,pw,ph,32); x.fill();
+    let inx=tx+28;
+    if(live){ x.fillStyle="#ff4b5c"; x.beginPath(); x.arc(inx+9,y-ph/2+16,11,0,7); x.fill(); inx+=dotw; }
+    x.fillStyle="#fff"; x.textBaseline="middle"; x.fillText(d.status,inx,y-ph/2+17); x.textBaseline="alphabetic";
+    y+=52;
+  }
+  if(d.title){ x.fillStyle="#fff"; const tp=fitText(x,d.title,maxW,132,"900"); x.font=`900 ${tp}px sans-serif`; y+=tp*0.92; x.fillText(d.title,tx,y); }
+  if(d.subtitle){ x.fillStyle="#e7d9ff"; const sp=fitText(x,d.subtitle,maxW,66,"700"); x.font=`700 ${sp}px sans-serif`; y+=sp+26; x.fillText(d.subtitle,tx,y); }
+  if(d.detail){ x.fillStyle="#b96bff"; const dp=fitText(x,d.detail,maxW,46,"700"); x.font=`700 ${dp}px sans-serif`; y+=dp+24; x.fillText(d.detail,tx,y); }
+  // barra inferior
+  const by=H-72;
+  x.textAlign="left"; x.fillStyle="#9a8fc0"; x.font="600 30px sans-serif";
+  const label="Hosted by "; const lw=x.measureText(label).width; let hb=52,bw=0; if(bmImg.complete&&bmImg.naturalWidth) bw=hb*bmImg.naturalWidth/bmImg.naturalHeight;
+  x.fillText(label,tx,by); if(bw) x.drawImage(bmImg,tx+lw,by-hb+18,bw,hb);
+  if(d.handle){ x.textAlign="right"; x.fillStyle="#cdbff0"; x.font="700 32px sans-serif"; x.fillText(d.handle,W-90,by); }
+}
+
+function readPoster(){
+  const type=$("pType").value, date=$("pDate").value.trim(), tz=$("pTz").value.trim();
+  const tzShort=(tz.match(/\(([^)]+)\)/)||[])[1]||"COL";
+  if(type==="schedule"){
+    const items=$("pSchedItems").value.split(/\r?\n/).map(l=>l.trim()).filter(Boolean).map(l=>{const m=l.split("|");return {time:(m[0]||"").trim(),event:(m[1]||m[0]||"").trim()};});
+    return {type,date,tz,title:$("pSchedTitle").value.trim()||"PROGRAMACIÓN",items};
+  }
+  if(type==="stream"){
+    return {type,status:$("pStStatus").value.trim(),title:$("pStTitle").value.trim(),
+      subtitle:$("pStSub").value.trim(),detail:$("pStDetail").value.trim(),handle:$("pStHandle").value.trim()};
+  }
+  return {type,date,tz,tzShort,title:$("pSmTitle").value.trim()||"GRAN SHOWMATCH",format:$("pSmFormat").value.trim()||"BO3",time:$("pSmTime").value.trim(),p1:$("pSmP1").value.trim()||"—",p2:$("pSmP2").value.trim()||"—",e1:$("pSmE1").value.trim(),e2:$("pSmE2").value.trim(),reason:$("pSmReason").value.trim(),prize:$("pSmPrize").value.trim()};
+}
+function renderPoster(){
+  const c=$("poster"); if(!c) return;
+  const type=$("pType").value;
+  const dim = type==="stream" ? [1920,1080] : [1080,1350];
+  if(c.width!==dim[0]||c.height!==dim[1]){ c.width=dim[0]; c.height=dim[1]; }
+  c.style.maxWidth = type==="stream" ? "580px" : "360px";
+  const x=c.getContext("2d"),W=c.width,H=c.height;
+  x.clearRect(0,0,W,H); const d=readPoster();
+  if(d.type==="schedule") drawSchedule(x,W,H,d);
+  else if(d.type==="stream") drawStream(x,W,H,d);
+  else drawShowmatch(x,W,H,d);
+}
+function downloadPoster(){
+  if(logoImg.src && !(logoImg.complete&&logoImg.naturalWidth)){ logoImg.onload=downloadPoster; return; }
+  if(bmImg.src && !(bmImg.complete&&bmImg.naturalWidth)){ bmImg.onload=downloadPoster; return; }
+  if(p1Img.src && !(p1Img.complete&&p1Img.naturalWidth)){ p1Img.onload=downloadPoster; return; }
+  if(p2Img.src && !(p2Img.complete&&p2Img.naturalWidth)){ p2Img.onload=downloadPoster; return; }
+  renderPoster();
+  const names={schedule:"programacion",showmatch:"showmatch",stream:"banner-transmision"};
+  $("poster").toBlob(bl=>{ const u=URL.createObjectURL(bl),a=document.createElement("a"); a.href=u; a.download=(names[readPoster().type]||"pieza")+"-torneo-aci.png"; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(u),1000); },"image/png");
+}
+function switchView(v){
+  document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("active",t.dataset.view===v));
+  $("view-sorteo").hidden=v!=="sorteo"; $("view-posts").hidden=v!=="posts";
+  if(v==="posts") renderPoster();
+}
+document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>switchView(t.dataset.view));
+$("pType").onchange=()=>{ const s=$("pType").value;
+  $("fg-schedule").classList.toggle("on",s==="schedule");
+  $("fg-showmatch").classList.toggle("on",s==="showmatch");
+  $("fg-stream").classList.toggle("on",s==="stream");
+  renderPoster(); };
+["pDate","pTz","pSchedTitle","pSchedItems","pSmTitle","pSmFormat","pSmTime","pSmP1","pSmP2","pSmE1","pSmE2","pSmReason","pSmPrize","pStStatus","pStTitle","pStSub","pStDetail","pStHandle"].forEach(id=>{ const el=$(id); if(el) el.addEventListener("input",renderPoster); });
+$("pDownload").onclick=downloadPoster;
+document.querySelectorAll("#stPresets button").forEach(btn=>btn.onclick=()=>{ $("pStStatus").value=btn.dataset.st; $("pStTitle").value=btn.dataset.ti; renderPoster(); });
+[logoImg,bmImg,p1Img,p2Img].forEach(im=>im.addEventListener("load",()=>{ if(!$("view-posts").hidden) renderPoster(); }));
+// Carga de imagen por contendiente (data-URI para no contaminar el canvas)
+function bindContenderImg(inputId, clearId, img){
+  const inp=$(inputId), clr=$(clearId);
+  if(inp) inp.addEventListener("change",()=>{
+    const f=inp.files&&inp.files[0];
+    if(!f){ img.removeAttribute("src"); renderPoster(); return; }
+    const r=new FileReader(); r.onload=e=>{ img.src=e.target.result; }; r.readAsDataURL(f);
+  });
+  if(clr) clr.addEventListener("click",()=>{ if(inp) inp.value=""; img.removeAttribute("src"); renderPoster(); });
+}
+bindContenderImg("pSmImg1","pSmImg1Clear",p1Img);
+bindContenderImg("pSmImg2","pSmImg2Clear",p2Img);
+</script>
+</body>
+</html>
