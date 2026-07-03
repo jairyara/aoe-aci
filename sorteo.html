@@ -117,6 +117,27 @@
     .row{flex-wrap:wrap}
   }
 
+  /* ---------- tabla de siembra ---------- */
+  .seedcard{margin-top:20px}
+  .seednote{margin:0 0 12px;font-size:12px}
+  .seednote code{background:var(--slot);border:1px solid var(--line);border-radius:5px;padding:1px 5px;font-size:11px;color:var(--txt)}
+  .seednote .warn{color:#f6c94b}
+  .seed-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--line);border-radius:10px}
+  table.seed{width:100%;border-collapse:collapse;font-size:13px;min-width:540px}
+  table.seed th,table.seed td{padding:8px 10px;text-align:right;white-space:nowrap;border-bottom:1px solid var(--line)}
+  table.seed th{position:sticky;top:0;background:var(--panel2);color:var(--muted);
+    font-size:10px;text-transform:uppercase;letter-spacing:.5px;font-weight:700;z-index:1}
+  table.seed th.num,table.seed td.num{text-align:center;color:var(--muted);width:34px;font-variant-numeric:tabular-nums}
+  table.seed th.nick,table.seed td.nick{text-align:left}
+  table.seed td.nick{font-weight:600}
+  table.seed td{color:var(--muted);font-variant-numeric:tabular-nums}
+  table.seed td.nick{color:var(--txt)}
+  table.seed td.rating{color:var(--accent);font-weight:800}
+  table.seed tbody tr:nth-child(odd) td{background:rgba(255,255,255,.02)}
+  table.seed tbody tr:last-child td{border-bottom:0}
+  .potpill{font-size:11px;color:var(--accent);border:1px solid var(--line);border-radius:6px;padding:2px 7px;white-space:nowrap}
+  table.seed .warn{cursor:help}
+
   /* ---------- MODAL ---------- */
   .overlay{position:fixed;inset:0;background:rgba(6,4,12,.86);backdrop-filter:blur(6px);
     display:none;align-items:center;justify-content:center;z-index:50}
@@ -225,6 +246,28 @@ ACI Granmini, 1391
   </div>
 
 </div>
+
+  <div class="card seedcard">
+    <h2>Jugadores &amp; siembra · 16 inscritos</h2>
+    <div class="hint seednote">
+      El <b>Rating</b> de siembra es un promedio ponderado del ELO de <b>aoe2insights</b> (Random Map):
+      <code>1v1 actual ×0.35 + Team actual ×0.30 + 1v1 máx ×0.20 + Team máx ×0.15</code>.
+      “máx” = pico histórico (extraído 2026-07-02). Los <b>bombos</b> se forman por Rating
+      (1–4 = Bombo 1 · cabezas, 5–8 = Bombo 2, …) y el sorteo coloca uno de cada bombo por grupo.
+      <span class="warn">⚠️</span> = sin datos de 1v1, se promedia solo con Team (renormalizado).
+    </div>
+    <div class="seed-wrap">
+      <table class="seed">
+        <thead><tr>
+          <th class="num">#</th><th class="nick">Jugador</th>
+          <th>1v1</th><th>Team</th><th>1v1 máx</th><th>Team máx</th>
+          <th>Rating</th><th>Bombo</th>
+        </tr></thead>
+        <tbody id="seedBody"></tbody>
+      </table>
+    </div>
+  </div>
+
 </div>
 
 <div class="wrap view" id="view-posts" hidden>
@@ -626,19 +669,43 @@ function downloadImage(){
   }, "image/png");
 }
 
-const EXAMPLE=`El Rey Nocturno, 1562
-Jyarar, 1409
-Calvohp17, 1404
-ACI Granmini, 1391
-ACI ARTANISX, 1319
-Dross, 1292
-SHAN, 1286
-GreenMario, 1232
-Tyuered, 1221
-ACI Kira_game, 1194
-ACI Tuffix, 1136
-Ummagumma, 1126
-Fok Israhell, 1086`;
+// Roster oficial (16) — datos de aoe2insights (RM) y Rating de siembra H (Excel, hoja "Notas").
+// d=1v1 actual, e=Team actual, f=1v1 máx, g=Team máx, h=Rating ponderado. Ordenado por h desc.
+const ROSTER=[
+  {n:"El Rey Nocturno",d:1609,e:1457,f:1616,g:1590,h:1562},
+  {n:"Jyarar",        d:1399,e:1394,f:1399,g:1473,h:1409},
+  {n:"Calvohp17",     d:1305,e:1411,f:1511,g:1479,h:1404},
+  {n:"ACI Granmini",  d:1422,e:1313,f:1422,g:1435,h:1391},
+  {n:"dadagama",      d:1261,e:1361,f:1261,g:1487,h:1325},
+  {n:"ACI ARTANISX",  d:null,e:1302,f:null,g:1354,h:1319,teamOnly:true},
+  {n:"El wicho",      d:1227,e:1334,f:1227,g:1536,h:1305},
+  {n:"Dross",         d:1253,e:1323,f:1289,g:1327,h:1292},
+  {n:"Codiman",       d:1243,e:1256,f:1275,g:1484,h:1289},
+  {n:"SHAN",          d:1208,e:1331,f:1208,g:1482,h:1286},
+  {n:"GreenMario",    d:1132,e:1242,f:1385,g:1242,h:1232},
+  {n:"Tyuered",       d:1181,e:1190,f:1181,g:1427,h:1221},
+  {n:"ACI Kira_game", d:1102,e:1237,f:1102,g:1442,h:1194},
+  {n:"ACI Tuffix",    d:1040,e:1224,f:1083,g:1253,h:1136},
+  {n:"Ummagumma",     d: 975,e:1203,f:1125,g:1324,h:1126},
+  {n:"Fok Israhell",  d: 980,e:1176,f:1008,g:1255,h:1086},
+];
+const EXAMPLE = ROSTER.map(p=>`${p.n}, ${p.h}`).join("\n");
+
+function renderRoster(){
+  const tb=$("seedBody"); if(!tb) return;
+  const nGroups = Math.max(2, Math.min(16, +$("groups").value || 4));
+  tb.innerHTML = ROSTER.map((p,i)=>{
+    const pot = Math.floor(i/nGroups)+1;
+    const cell = v => v==null ? "—" : v;
+    return `<tr>
+      <td class="num">${i+1}</td>
+      <td class="nick">${enc(p.n)}${p.teamOnly?' <span class="warn" title="Sin 1v1: promedio solo con Team (renormalizado)">⚠️</span>':''}</td>
+      <td>${cell(p.d)}</td><td>${cell(p.e)}</td><td>${cell(p.f)}</td><td>${cell(p.g)}</td>
+      <td class="rating">${p.h}</td>
+      <td><span class="potpill">B${pot}</span></td>
+    </tr>`;
+  }).join("");
+}
 
 $("prep").onclick=prepare;
 $("next").onclick=revealNext;
@@ -647,6 +714,8 @@ $("reset").onclick=()=>{ if(pots.length) prepare(); };
 $("copy").onclick=copyResult;
 $("download").onclick=downloadImage;
 $("loadExample").onclick=()=>{ $("input").value=EXAMPLE; };
+$("groups").addEventListener("input", renderRoster);
+renderRoster();
 $("m-assign").onclick=()=>{ if($("reveal").classList.contains("landed")) commit(); };
 $("mute").onclick=()=>{ muted=!muted; $("mute").textContent=muted?"🔇":"🔊"; const a=$("audio"); if(muted) a.pause(); else if(pots.length&&busy) a.play().catch(()=>{}); };
 $("vol").oninput=(e)=>{ $("audio").volume = (+e.target.value)/100; };
