@@ -1,0 +1,10 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  // Si tu Worker en el dashboard ya tiene otro nombre, cámbialo aquí para que coincida.
+  "name": "aoe-aci",
+  "compatibility_date": "2026-07-01",
+  // Solo se publica lo que "npm run build" copia a ./public (nunca el Excel ni los scripts).
+  "assets": {
+    "directory": "./public"
+  }
+}

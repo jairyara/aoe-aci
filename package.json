@@ -1,0 +1,11 @@
+{
+  "name": "aoe-aci",
+  "private": true,
+  "scripts": {
+    "build": "rm -rf public && mkdir -p public && cp index.html sorteo.html public/ && cp -R assets public/assets",
+    "deploy": "npm run build && wrangler deploy"
+  },
+  "devDependencies": {
+    "wrangler": "^4.107.0"
+  }
+}
